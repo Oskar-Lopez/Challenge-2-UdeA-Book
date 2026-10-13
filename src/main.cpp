@@ -1,28 +1,41 @@
 #include <iostream>
 #include "ListaLigada.h"
+#include "Mensaje.h"
+using namespace std;
 
 int main() {
+    // Lista ligada
     ListaLigada<int> lista;
-
     lista.insertarAlFinal(10);
     lista.insertarAlFinal(20);
     lista.insertarAlFinal(30);
 
-    std::cout << "Elemento [0]: " << lista[0] << std::endl;
-    std::cout << "Elemento [1]: " << lista[1] << std::endl;
-    std::cout << "Elemento [2]: " << lista[2] << std::endl;
+    cout << "=== Lista Ligada ===" << endl;
+    cout << "Elemento [0]: " << lista[0] << endl;
+    cout << "Tamanio: " << lista.obtenerTamanio() << endl;
 
-    std::cout << "Tamanio: " << lista.obtenerTamanio() << std::endl;
+    // Mensaje
+    cout << "\n=== Mensaje ===" << endl;
+    Mensaje m1("Hola, como estas?", "2026-10-12 14:30", nullptr, nullptr);
+    cout << "Texto: " << m1.getTexto() << endl;
+    cout << "Fecha: " << m1.getFechaEnvio() << endl;
+    cout << "Leido: " << (m1.getLeido() ? "Si" : "No") << endl;
 
-    lista.eliminarElemento(20);
-    std::cout << "Tras eliminar 20, tamanio: " << lista.obtenerTamanio() << std::endl;
+    m1.marcarComoLeido();
+    cout << "Tras marcar leido: " << (m1.getLeido() ? "Si" : "No") << endl;
+    cout << "Longitud: " << m1.obtenerLongitudTexto() << endl;
 
-    Nodo<int>* actual = lista.getCabeza();
-    for (int i = 0; i < 6; ++i) {
-        std::cout << actual->dato << " -> ";
-        actual = actual->siguiente;
+    // Copia
+    Mensaje m2 = m1;
+    cout << "Copia - Texto: " << m2.getTexto() << endl;
+
+    // Igualdad
+    if (m1 == m2) {
+        cout << "m1 y m2 son iguales" << endl;
     }
-    std::cout << "(vuelve al inicio)" << std::endl;
+
+    // Función amiga
+    imprimirMensaje(m1);
 
     return 0;
 }
