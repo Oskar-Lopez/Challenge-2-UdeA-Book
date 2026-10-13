@@ -16,6 +16,7 @@ int Mensaje::longitudCadena(const char* cadena) {
 }
 
 void Mensaje::copiarCadena(char* destino, const char* origen) {
+    if (destino == nullptr || origen == nullptr) return;
     int i = 0;
     while (origen[i] != '\0') {
         destino[i] = origen[i];
@@ -25,12 +26,13 @@ void Mensaje::copiarCadena(char* destino, const char* origen) {
 }
 
 bool Mensaje::compararCadenas(const char* a, const char* b) {
+    if (a == nullptr || b == nullptr) return a == b;
     int i = 0;
     while (a[i] != '\0' && b[i] != '\0') {
         if (a[i] != b[i]) return false;
         i++;
     }
-    return a[i] == b[i];  // Ambos terminan al mismo tiempo
+    return a[i] == b[i];
 }
 
 // =========================================================
@@ -38,10 +40,8 @@ bool Mensaje::compararCadenas(const char* a, const char* b) {
 // =========================================================
 
 Mensaje::Mensaje() {
-    texto = new char[1];
-    texto[0] = '\0';
-    fechaEnvio = new char[1];
-    fechaEnvio[0] = '\0';
+    texto = new char[1]{'\0'};
+    fechaEnvio = new char[1]{'\0'};
     leido = false;
     emisor = nullptr;
     receptor = nullptr;
@@ -53,7 +53,6 @@ Mensaje::Mensaje(const char* texto, const char* fecha,
     if (lenTexto > 512) lenTexto = 512;
 
     this->texto = new char[lenTexto + 1];
-    // Copiar solo los primeros lenTexto caracteres
     for (int i = 0; i < lenTexto; i++) {
         this->texto[i] = texto[i];
     }
@@ -61,7 +60,7 @@ Mensaje::Mensaje(const char* texto, const char* fecha,
 
     int lenFecha = longitudCadena(fecha);
     this->fechaEnvio = new char[lenFecha + 1];
-    copiarCadena(this->fechaEnvio, fecha);
+    copiarCadena(this->fechaEnvio, fecha != nullptr ? fecha : "");
 
     this->leido = false;
     this->emisor = emisor;
@@ -118,7 +117,7 @@ void Mensaje::setFechaEnvio(const char* fecha) {
     delete[] this->fechaEnvio;
     int lenFecha = longitudCadena(fecha);
     this->fechaEnvio = new char[lenFecha + 1];
-    copiarCadena(this->fechaEnvio, fecha);
+    copiarCadena(this->fechaEnvio, fecha != nullptr ? fecha : "");
 }
 
 bool Mensaje::getLeido() const {
@@ -200,8 +199,8 @@ Mensaje& Mensaje::operator=(const Mensaje& otro) {
 void imprimirMensaje(const Mensaje& m) {
     cout << "De: " << (m.emisor ? "Usuario" : "N/A") << endl;
     cout << "Para: " << (m.receptor ? "Usuario" : "N/A") << endl;
-    cout << "Fecha: " << m.fechaEnvio << endl;
+    cout << "Fecha: " << (m.fechaEnvio ? m.fechaEnvio : "N/A") << endl;
     cout << "Leido: " << (m.leido ? "Si" : "No") << endl;
-    cout << "Texto: " << m.texto << endl;
+    cout << "Texto: " << (m.texto ? m.texto : "") << endl;
     cout << "---" << endl;
 }
