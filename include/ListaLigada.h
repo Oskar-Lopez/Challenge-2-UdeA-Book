@@ -11,39 +11,39 @@ private:
     int tamanio;
 
 public:
+    // Constructores y destructor
     ListaLigada();
     ListaLigada(const ListaLigada<T>& otra);
     ~ListaLigada();
 
-    void insertarAlFinal(T elemento);
-    bool eliminarElemento(T elemento);
+    // Operaciones principales con paso por referencia constante
+    void insertarAlFinal(const T& elemento);
+    bool eliminarElemento(const T& elemento);
     Nodo<T>* obtenerNodo(int posicion) const;
     int obtenerTamanio() const;
     bool estaVacia() const;
     void vaciar();
 
+    // Sobrecarga de operadores
     T& operator[](int indice);
     const T& operator[](int indice) const;
     ListaLigada<T>& operator=(const ListaLigada<T>& otra);
     bool operator==(const ListaLigada<T>& otra) const;
 
+    // Getters
     Nodo<T>* getCabeza() const { return cabeza; }
     Nodo<T>* getCola() const { return cola; }
 };
 
-template <typename T>
-ListaLigada<T>::ListaLigada() {
-    cabeza = nullptr;
-    cola = nullptr;
-    tamanio = 0;
-}
+// =========================================================
+// IMPLEMENTACIÓN
+// =========================================================
 
 template <typename T>
-ListaLigada<T>::ListaLigada(const ListaLigada<T>& otra) {
-    cabeza = nullptr;
-    cola = nullptr;
-    tamanio = 0;
+ListaLigada<T>::ListaLigada() : cabeza(nullptr), cola(nullptr), tamanio(0) {}
 
+template <typename T>
+ListaLigada<T>::ListaLigada(const ListaLigada<T>& otra) : cabeza(nullptr), cola(nullptr), tamanio(0) {
     Nodo<T>* actual = otra.cabeza;
     for (int i = 0; i < otra.tamanio; ++i) {
         insertarAlFinal(actual->dato);
@@ -57,7 +57,7 @@ ListaLigada<T>::~ListaLigada() {
 }
 
 template <typename T>
-void ListaLigada<T>::insertarAlFinal(T elemento) {
+void ListaLigada<T>::insertarAlFinal(const T& elemento) {
     Nodo<T>* nuevo = new Nodo<T>(elemento);
 
     if (cabeza == nullptr) {
@@ -76,7 +76,7 @@ void ListaLigada<T>::insertarAlFinal(T elemento) {
 }
 
 template <typename T>
-bool ListaLigada<T>::eliminarElemento(T elemento) {
+bool ListaLigada<T>::eliminarElemento(const T& elemento) {
     if (cabeza == nullptr) return false;
 
     Nodo<T>* actual = cabeza;
@@ -136,8 +136,16 @@ void ListaLigada<T>::vaciar() {
     tamanio = 0;
 }
 
+// =========================================================
+// SOBRECARGA DE OPERADORES SEGUROS
+// =========================================================
+
 template <typename T>
 T& ListaLigada<T>::operator[](int indice) {
+    if (cabeza == nullptr) {
+        static T defecto{};
+        return defecto;
+    }
     Nodo<T>* nodo = obtenerNodo(indice);
     if (nodo == nullptr) {
         return cabeza->dato;
@@ -147,6 +155,10 @@ T& ListaLigada<T>::operator[](int indice) {
 
 template <typename T>
 const T& ListaLigada<T>::operator[](int indice) const {
+    if (cabeza == nullptr) {
+        static T defecto{};
+        return defecto;
+    }
     Nodo<T>* nodo = obtenerNodo(indice);
     if (nodo == nullptr) {
         return cabeza->dato;

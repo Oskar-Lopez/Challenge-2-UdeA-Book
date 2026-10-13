@@ -2,28 +2,31 @@
 #define NODO_H
 
 template <typename T>
+class ListaLigada; // Forward declaration para conceder amistad
+
+template <typename T>
 class Nodo {
-public:
+private:
     T dato;
     Nodo<T>* siguiente;
     Nodo<T>* anterior;
 
-    Nodo(T valor) {
-        this->dato = valor;
-        this->siguiente = nullptr;
-        this->anterior = nullptr;
-    }
+    // Encapsulamiento POO: solo ListaLigada accede a los miembros privados
+    friend class ListaLigada<T>;
 
-    Nodo(const Nodo<T>& otro) {
-        this->dato = otro.dato;
-        this->siguiente = nullptr;
-        this->anterior = nullptr;
-    }
-
+public:
+    // Constructores y destructor
+    Nodo(T valor) : dato(valor), siguiente(nullptr), anterior(nullptr) {}
+    Nodo(const Nodo<T>& otro) : dato(otro.dato), siguiente(nullptr), anterior(nullptr) {}
     ~Nodo() {
-        this->siguiente = nullptr;
-        this->anterior = nullptr;
+        siguiente = nullptr;
+        anterior = nullptr;
     }
+
+    // Getters públicos
+    T getDato() const { return dato; }
+    Nodo<T>* getSiguiente() const { return siguiente; }
+    Nodo<T>* getAnterior() const { return anterior; }
 };
 
 #endif
