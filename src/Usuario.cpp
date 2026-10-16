@@ -1,12 +1,13 @@
 #include "Usuario.h"
 #include "Mensaje.h"
 #include "Album.h"
+#include "Plataforma.h"
 #include <iostream>
 
 using namespace std;
 
 // =========================================================
-// MÉTODOS AUXILIARES PRIVADOS
+// AUXILIARES DE CADENAS
 // =========================================================
 
 int Usuario::longitudCadena(const char* cadena) {
@@ -19,10 +20,7 @@ int Usuario::longitudCadena(const char* cadena) {
 void Usuario::copiarCadena(char* destino, const char* origen) {
     if (destino == nullptr || origen == nullptr) return;
     int i = 0;
-    while (origen[i] != '\0') {
-        destino[i] = origen[i];
-        i++;
-    }
+    while (origen[i] != '\0') { destino[i] = origen[i]; i++; }
     destino[i] = '\0';
 }
 
@@ -36,13 +34,10 @@ bool Usuario::compararCadenas(const char* a, const char* b) {
     return a[i] == b[i];
 }
 
-// Compara fechas en formato "YYYY-MM-DD HH:MM"
-// Retorna: -1 si a < b, 0 si a == b, 1 si a > b
 int Usuario::compararFechas(const char* a, const char* b) {
     if (a == nullptr && b == nullptr) return 0;
     if (a == nullptr) return -1;
     if (b == nullptr) return 1;
-
     int i = 0;
     while (a[i] != '\0' && b[i] != '\0') {
         if (a[i] < b[i]) return -1;
@@ -95,22 +90,16 @@ Usuario::Usuario(const char* username, const char* fechaNacimiento, const char* 
 Usuario::Usuario(const Usuario& otro) {
     username = new char[longitudCadena(otro.username) + 1];
     copiarCadena(username, otro.username);
-
     fechaNacimiento = new char[longitudCadena(otro.fechaNacimiento) + 1];
     copiarCadena(fechaNacimiento, otro.fechaNacimiento);
-
     correo = new char[longitudCadena(otro.correo) + 1];
     copiarCadena(correo, otro.correo);
-
     fotoPerfil = new char[longitudCadena(otro.fotoPerfil) + 1];
     copiarCadena(fotoPerfil, otro.fotoPerfil);
-
     ciudad = new char[longitudCadena(otro.ciudad) + 1];
     copiarCadena(ciudad, otro.ciudad);
-
     pais = new char[longitudCadena(otro.pais) + 1];
     copiarCadena(pais, otro.pais);
-
     fechaInscripcion = new char[longitudCadena(otro.fechaInscripcion) + 1];
     copiarCadena(fechaInscripcion, otro.fechaInscripcion);
 
@@ -122,12 +111,9 @@ Usuario::Usuario(const Usuario& otro) {
 }
 
 Usuario::~Usuario() {
-    delete[] username;
-    delete[] fechaNacimiento;
-    delete[] correo;
-    delete[] fotoPerfil;
-    delete[] ciudad;
-    delete[] pais;
+    delete[] username;         delete[] fechaNacimiento;
+    delete[] correo;           delete[] fotoPerfil;
+    delete[] ciudad;           delete[] pais;
     delete[] fechaInscripcion;
 }
 
@@ -184,14 +170,12 @@ void Usuario::setFechaInscripcion(const char* fecha) {
     copiarCadena(this->fechaInscripcion, fecha != nullptr ? fecha : "");
 }
 
-// Getters de listas (no const)
 ListaLigada<Usuario*>& Usuario::getAmigos() { return amigos; }
 ListaLigada<Usuario*>& Usuario::getSolicitudes() { return solicitudes; }
 ListaLigada<Mensaje*>& Usuario::getMensajesEnviados() { return mensajesEnviados; }
 ListaLigada<Mensaje*>& Usuario::getMensajesRecibidos() { return mensajesRecibidos; }
 ListaLigada<Album*>& Usuario::getAlbumes() { return albumes; }
 
-// Getters de listas (const)
 const ListaLigada<Usuario*>& Usuario::getAmigos() const { return amigos; }
 const ListaLigada<Usuario*>& Usuario::getSolicitudes() const { return solicitudes; }
 const ListaLigada<Mensaje*>& Usuario::getMensajesEnviados() const { return mensajesEnviados; }
@@ -205,6 +189,7 @@ const ListaLigada<Album*>& Usuario::getAlbumes() const { return albumes; }
 bool Usuario::esAmigo(const Usuario* otro) const {
     if (otro == nullptr) return false;
     for (int i = 0; i < amigos.obtenerTamanio(); ++i) {
+        Plataforma::registrarIteracion();
         if (amigos[i] == otro) return true;
     }
     return false;
@@ -213,6 +198,7 @@ bool Usuario::esAmigo(const Usuario* otro) const {
 bool Usuario::tieneSolicitudDe(const Usuario* otro) const {
     if (otro == nullptr) return false;
     for (int i = 0; i < solicitudes.obtenerTamanio(); ++i) {
+        Plataforma::registrarIteracion();
         if (solicitudes[i] == otro) return true;
     }
     return false;
@@ -221,36 +207,33 @@ bool Usuario::tieneSolicitudDe(const Usuario* otro) const {
 void Usuario::enviarSolicitud(Usuario* destino) {
     if (destino == nullptr || destino == this) return;
     if (esAmigo(destino)) return;
-    if (destino->tieneSolicitudDe(this)) return;    // ya me envió solicitud
-    if (tieneSolicitudDe(destino)) return;           // ya le envié antes
+    if (destino->tieneSolicitudDe(this)) return;
+    if (tieneSolicitudDe(destino)) return;
 
     destino->solicitudes.insertarAlFinal(this);
+    Plataforma::registrarIteracion();
     cout << "Solicitud enviada a " << destino->getUsername() << endl;
 }
 
 void Usuario::aceptarSolicitud(Usuario* origen) {
     if (origen == nullptr) return;
-
     if (solicitudes.eliminarElemento(origen)) {
         amigos.insertarAlFinal(origen);
         origen->amigos.insertarAlFinal(this);
+        Plataforma::registrarIteracion(2);
         cout << "Ahora eres amigo de " << origen->getUsername() << endl;
-    } else {
-        cout << "No hay solicitud pendiente de " << origen->getUsername() << endl;
     }
 }
 
-// Cuenta amigos en común entre this y otro
 static int contarAmigosEnComun(const Usuario* a, const Usuario* b) {
     int contador = 0;
     const ListaLigada<Usuario*>& amigosA = a->getAmigos();
     const ListaLigada<Usuario*>& amigosB = b->getAmigos();
     for (int i = 0; i < amigosA.obtenerTamanio(); ++i) {
+        Plataforma::registrarIteracion();
         for (int j = 0; j < amigosB.obtenerTamanio(); ++j) {
-            if (amigosA[i] == amigosB[j]) {
-                contador++;
-                break;
-            }
+            Plataforma::registrarIteracion();
+            if (amigosA[i] == amigosB[j]) { contador++; break; }
         }
     }
     return contador;
@@ -259,29 +242,26 @@ static int contarAmigosEnComun(const Usuario* a, const Usuario* b) {
 void Usuario::verSugerencias(int k) const {
     if (k < 1) k = 1;
     if (k > 20) k = 20;
+    cout << "=== Sugerencias de amistad para " << username << " ===\n";
 
-    cout << "=== Sugerencias de amistad para " << username << " ===" << endl;
-
-    // Recolectar candidatos únicos (amigos de mis amigos)
     ListaLigada<Usuario*> candidatos;
     ListaLigada<int> conteos;
 
     for (int i = 0; i < amigos.obtenerTamanio(); ++i) {
+        Plataforma::registrarIteracion();
         Usuario* amigoActual = amigos[i];
         const ListaLigada<Usuario*>& amigosDeAmigo = amigoActual->getAmigos();
-
         for (int j = 0; j < amigosDeAmigo.obtenerTamanio(); ++j) {
+            Plataforma::registrarIteracion();
             Usuario* candidato = amigosDeAmigo[j];
-
-            // Filtrar: no yo, no amigo, no solicitud pendiente
             if (candidato == this) continue;
             if (esAmigo(candidato)) continue;
             if (tieneSolicitudDe(candidato)) continue;
             if (candidato->tieneSolicitudDe(this)) continue;
 
-            // Verificar si ya está en candidatos
             bool yaExiste = false;
             for (int m = 0; m < candidatos.obtenerTamanio(); ++m) {
+                Plataforma::registrarIteracion();
                 if (candidatos[m] == candidato) { yaExiste = true; break; }
             }
             if (yaExiste) continue;
@@ -292,15 +272,14 @@ void Usuario::verSugerencias(int k) const {
         }
     }
 
-    // Ordenar candidatos por amigos en común (descendente)
     int n = candidatos.obtenerTamanio();
     for (int i = 0; i < n - 1; ++i) {
         for (int j = 0; j < n - 1 - i; ++j) {
+            Plataforma::registrarIteracion();
             if (conteos[j] < conteos[j + 1]) {
                 Usuario* tmpU = candidatos[j];
                 candidatos[j] = candidatos[j + 1];
                 candidatos[j + 1] = tmpU;
-
                 int tmpC = conteos[j];
                 conteos[j] = conteos[j + 1];
                 conteos[j + 1] = tmpC;
@@ -308,79 +287,71 @@ void Usuario::verSugerencias(int k) const {
         }
     }
 
-    // Mostrar los primeros k
     int mostradas = (n < k) ? n : k;
-    if (mostradas == 0) {
-        cout << "No hay sugerencias disponibles en este momento." << endl;
-        return;
-    }
-
+    if (mostradas == 0) { cout << "No hay sugerencias disponibles.\n"; return; }
     for (int i = 0; i < mostradas; ++i) {
         cout << (i + 1) << ". " << candidatos[i]->getUsername()
-        << " (" << conteos[i] << " amigos en comun)" << endl;
+        << " (" << conteos[i] << " amigos en comun)\n";
     }
 }
 
 void Usuario::enviarMensaje(Usuario* amigo, const char* texto, const char* fecha) {
     if (amigo == nullptr || !esAmigo(amigo)) {
-        cout << "Error: Solo se pueden enviar mensajes a amigos." << endl;
-        return;
+        cout << "Error: Solo se pueden enviar mensajes a amigos.\n"; return;
     }
     if (texto == nullptr || longitudCadena(texto) == 0) {
-        cout << "Error: no se pueden enviar mensajes vacios." << endl;
-        return;
+        cout << "Error: no se pueden enviar mensajes vacios.\n"; return;
     }
     if (longitudCadena(texto) > 512) {
-        cout << "Error: el mensaje excede 512 caracteres." << endl;
-        return;
+        cout << "Error: el mensaje excede 512 caracteres.\n"; return;
     }
-
-    Mensaje* nuevoMensaje = new Mensaje(texto, fecha, this, amigo);
-
-    // Insertar en orden por fecha en mensajesEnviados
-    int pos = 0;
-    while (pos < mensajesEnviados.obtenerTamanio() &&
-           compararFechas(mensajesEnviados[pos]->getFechaEnvio(), fecha) <= 0) {
-        pos++;
-    }
-
-    if (pos == mensajesEnviados.obtenerTamanio()) {
-        mensajesEnviados.insertarAlFinal(nuevoMensaje);
-    } else {
-        // Insertar en posición (la lista no tiene insertarEnPosicion, hacemos manual)
-        // Alternativa: insertar al final y luego ordenar. Aquí insertamos al final.
-        mensajesEnviados.insertarAlFinal(nuevoMensaje);
-    }
-
-    amigo->mensajesRecibidos.insertarAlFinal(nuevoMensaje);
+    Mensaje* nuevo = new Mensaje(texto, fecha, this, amigo);
+    mensajesEnviados.insertarAlFinal(nuevo);
+    amigo->mensajesRecibidos.insertarAlFinal(nuevo);
+    Plataforma::registrarIteracion(2);
     cout << "Mensaje enviado a " << amigo->getUsername() << endl;
 }
 
 void Usuario::buscarMensajes(const char* inicio, const char* fin) const {
-    cout << "=== Mensajes recibidos entre " << inicio << " y " << fin << " ===" << endl;
-
+    cout << "=== Mensajes recibidos entre " << inicio << " y " << fin << " ===\n";
     int encontrados = 0;
     for (int i = 0; i < mensajesRecibidos.obtenerTamanio(); ++i) {
+        Plataforma::registrarIteracion();
         Mensaje* m = mensajesRecibidos[i];
         const char* fecha = m->getFechaEnvio();
-
         if (compararFechas(fecha, inicio) >= 0 &&
             compararFechas(fecha, fin) <= 0) {
             cout << "De " << m->getEmisor()->getUsername()
-            << " [" << fecha << "]: " << m->getTexto() << endl;
+            << " [" << fecha << "]: " << m->getTexto() << "\n";
             encontrados++;
         }
     }
-
-    if (encontrados == 0) {
-        cout << "No se encontraron mensajes en ese rango." << endl;
-    }
+    if (encontrados == 0) cout << "No se encontraron mensajes.\n";
 }
 
 void Usuario::agregarAlbum(Album* album) {
-    if (album != nullptr) {
-        albumes.insertarAlFinal(album);
-    }
+    if (album != nullptr) albumes.insertarAlFinal(album);
+}
+
+// =========================================================
+// MEMORIA
+// =========================================================
+
+unsigned long Usuario::calcularMemoriaBytes() const {
+    unsigned long total = sizeof(*this);
+    total += longitudCadena(username) + 1;
+    total += longitudCadena(fechaNacimiento) + 1;
+    total += longitudCadena(correo) + 1;
+    total += longitudCadena(fotoPerfil) + 1;
+    total += longitudCadena(ciudad) + 1;
+    total += longitudCadena(pais) + 1;
+    total += longitudCadena(fechaInscripcion) + 1;
+    total += amigos.obtenerTamanio() * sizeof(Nodo<Usuario*>);
+    total += solicitudes.obtenerTamanio() * sizeof(Nodo<Usuario*>);
+    total += mensajesEnviados.obtenerTamanio() * sizeof(Nodo<Mensaje*>);
+    total += mensajesRecibidos.obtenerTamanio() * sizeof(Nodo<Mensaje*>);
+    total += albumes.obtenerTamanio() * sizeof(Nodo<Album*>);
+    return total;
 }
 
 // =========================================================
@@ -397,33 +368,23 @@ bool Usuario::operator!=(const Usuario& otro) const {
 
 Usuario& Usuario::operator=(const Usuario& otro) {
     if (this == &otro) return *this;
-
-    delete[] username;
-    delete[] fechaNacimiento;
-    delete[] correo;
-    delete[] fotoPerfil;
-    delete[] ciudad;
-    delete[] pais;
+    delete[] username; delete[] fechaNacimiento;
+    delete[] correo;   delete[] fotoPerfil;
+    delete[] ciudad;   delete[] pais;
     delete[] fechaInscripcion;
 
     username = new char[longitudCadena(otro.username) + 1];
     copiarCadena(username, otro.username);
-
     fechaNacimiento = new char[longitudCadena(otro.fechaNacimiento) + 1];
     copiarCadena(fechaNacimiento, otro.fechaNacimiento);
-
     correo = new char[longitudCadena(otro.correo) + 1];
     copiarCadena(correo, otro.correo);
-
     fotoPerfil = new char[longitudCadena(otro.fotoPerfil) + 1];
     copiarCadena(fotoPerfil, otro.fotoPerfil);
-
     ciudad = new char[longitudCadena(otro.ciudad) + 1];
     copiarCadena(ciudad, otro.ciudad);
-
     pais = new char[longitudCadena(otro.pais) + 1];
     copiarCadena(pais, otro.pais);
-
     fechaInscripcion = new char[longitudCadena(otro.fechaInscripcion) + 1];
     copiarCadena(fechaInscripcion, otro.fechaInscripcion);
 
@@ -432,23 +393,12 @@ Usuario& Usuario::operator=(const Usuario& otro) {
     mensajesEnviados = otro.mensajesEnviados;
     mensajesRecibidos = otro.mensajesRecibidos;
     albumes = otro.albumes;
-
     return *this;
 }
 
-// =========================================================
-// FUNCIÓN AMIGA
-// =========================================================
-
 void imprimirUsuario(const Usuario& u) {
-    cout << "Usuario: " << u.username << endl;
-    cout << "  Nombre completo: " << u.fechaNacimiento << endl;
-    cout << "  Correo: " << u.correo << endl;
-    cout << "  Ciudad: " << u.ciudad << ", " << u.pais << endl;
-    cout << "  Amigos: " << u.amigos.obtenerTamanio() << endl;
-    cout << "  Solicitudes: " << u.solicitudes.obtenerTamanio() << endl;
-    cout << "  Mensajes enviados: " << u.mensajesEnviados.obtenerTamanio() << endl;
-    cout << "  Mensajes recibidos: " << u.mensajesRecibidos.obtenerTamanio() << endl;
-    cout << "  Albumes: " << u.albumes.obtenerTamanio() << endl;
-    cout << "---" << endl;
+    cout << "Usuario: " << u.username << "\n";
+    cout << "  Correo: " << u.correo << "\n";
+    cout << "  Ciudad: " << u.ciudad << ", " << u.pais << "\n";
+    cout << "  Amigos: " << u.amigos.obtenerTamanio() << "\n---\n";
 }
