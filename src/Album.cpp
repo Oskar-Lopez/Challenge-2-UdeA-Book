@@ -7,19 +7,14 @@
 int Album::longitudCadena(const char* cadena) {
     if (cadena == nullptr) return 0;
     int len = 0;
-    while (cadena[len] != '\0') {
-        len++;
-    }
+    while (cadena[len] != '\0') len++;
     return len;
 }
 
 void Album::copiarCadena(char* destino, const char* origen) {
     if (origen == nullptr || destino == nullptr) return;
     int i = 0;
-    while (origen[i] != '\0') {
-        destino[i] = origen[i];
-        i++;
-    }
+    while (origen[i] != '\0') { destino[i] = origen[i]; i++; }
     destino[i] = '\0';
 }
 
@@ -33,15 +28,23 @@ bool Album::compararCadenas(const char* a, const char* b) {
     return a[i] == b[i];
 }
 
+void Album::liberarFotos() {
+    for (int i = 0; i < fotos.obtenerTamanio(); ++i) {
+        if (fotos[i] != nullptr) {
+            delete fotos[i];
+            fotos[i] = nullptr;   // ← Corrección: evita warning de doble free
+        }
+    }
+    fotos.vaciar();
+}
+
 // =========================================================
 // CONSTRUCTORES Y DESTRUCTOR
 // =========================================================
 
 Album::Album() {
-    nombre = new char[1];
-    nombre[0] = '\0';
-    rutaAlmacenamiento = new char[1];
-    rutaAlmacenamiento[0] = '\0';
+    nombre = new char[1];               nombre[0] = '\0';
+    rutaAlmacenamiento = new char[1];   rutaAlmacenamiento[0] = '\0';
     privacidad = 'P';
 }
 
@@ -57,7 +60,6 @@ Album::Album(const char* nombre, const char* ruta, char privacidad) {
     this->privacidad = privacidad;
 }
 
-// Constructor de copia con COPIA PROFUNDA de las fotos
 Album::Album(const Album& otro) {
     int lenNom = longitudCadena(otro.nombre);
     this->nombre = new char[lenNom + 1];
@@ -69,7 +71,6 @@ Album::Album(const Album& otro) {
 
     this->privacidad = otro.privacidad;
 
-    // Duplicar cada foto instanciada para evitar punteros compartidos
     for (int i = 0; i < otro.fotos.obtenerTamanio(); ++i) {
         if (otro.fotos[i] != nullptr) {
             Foto* nuevaFoto = new Foto(*(otro.fotos[i]));
@@ -84,12 +85,7 @@ Album::~Album() {
     delete[] rutaAlmacenamiento;
     nombre = nullptr;
     rutaAlmacenamiento = nullptr;
-
-    // Liberar la memoria de todas las fotos administradas por el álbum
-    for (int i = 0; i < fotos.obtenerTamanio(); ++i) {
-        delete fotos[i];
-    }
-    fotos.vaciar();
+    liberarFotos();
 }
 
 // =========================================================
@@ -130,7 +126,8 @@ void Album::agregarFoto(Foto* f) {
 }
 
 bool Album::esVisibleParaAmigos() const {
-    return (privacidad == 'P' || privacidad == 'p' || privacidad == 'A' || privacidad == 'a');
+    return (privacidad == 'P' || privacidad == 'p' ||
+            privacidad == 'A' || privacidad == 'a');
 }
 
 unsigned long Album::obtenerMemoriaConsumida() const {
@@ -138,14 +135,10 @@ unsigned long Album::obtenerMemoriaConsumida() const {
     if (nombre) total += (longitudCadena(nombre) + 1) * sizeof(char);
     if (rutaAlmacenamiento) total += (longitudCadena(rutaAlmacenamiento) + 1) * sizeof(char);
 
-    // Memoria consumida por los nodos de la ListaLigada
     total += sizeof(fotos) + (fotos.obtenerTamanio() * sizeof(Nodo<Foto*>));
 
-    // Memoria consumida por cada objeto Foto en dynamic memory
     for (int i = 0; i < fotos.obtenerTamanio(); ++i) {
-        if (fotos[i] != nullptr) {
-            total += fotos[i]->obtenerMemoriaConsumida();
-        }
+        if (fotos[i] != nullptr) total += fotos[i]->obtenerMemoriaConsumida();
     }
     return total;
 }
@@ -157,16 +150,12 @@ unsigned long Album::obtenerMemoriaConsumida() const {
 Album& Album::operator=(const Album& otro) {
     if (this == &otro) return *this;
 
-    // 1. Liberar recursos existentes
     delete[] nombre;
     delete[] rutaAlmacenamiento;
+    nombre = nullptr;
+    rutaAlmacenamiento = nullptr;
+    liberarFotos();
 
-    for (int i = 0; i < fotos.obtenerTamanio(); ++i) {
-        delete fotos[i];
-    }
-    fotos.vaciar();
-
-    // 2. Copiar atributos simples
     int lenNom = longitudCadena(otro.nombre);
     this->nombre = new char[lenNom + 1];
     copiarCadena(this->nombre, otro.nombre);
@@ -177,7 +166,6 @@ Album& Album::operator=(const Album& otro) {
 
     this->privacidad = otro.privacidad;
 
-    // 3. COPIA PROFUNDA de la lista de fotos
     for (int i = 0; i < otro.fotos.obtenerTamanio(); ++i) {
         if (otro.fotos[i] != nullptr) {
             Foto* nuevaFoto = new Foto(*(otro.fotos[i]));
@@ -185,7 +173,6 @@ Album& Album::operator=(const Album& otro) {
             this->fotos.insertarAlFinal(nuevaFoto);
         }
     }
-
     return *this;
 }
 
