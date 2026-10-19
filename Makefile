@@ -1,8 +1,12 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Iinclude
+CXXFLAGS = -std=c++11 -Wall -Iinclude
 TARGET = udeabook
 SRC = src/main.cpp \
-      src/Mensaje.cpp
+      src/Mensaje.cpp \
+      src/Usuario.cpp \
+      src/Album.cpp \
+      src/Foto.cpp \
+      src/Plataforma.cpp
 
 all: $(TARGET)
 
